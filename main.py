@@ -87,8 +87,7 @@ def playMusic(keyword, nickname):
         pygame.mixer.music.play(loops=0, start=0.0)
         print u"正在播放" + nickname + u"点播的" + unicode(keyword, "utf-8")
         f = open("show.txt", "a")
-        print >> f, "正在播放" + nickname.encode('utf-8')
-        print >> f, "点播的" + keyword
+        print >> f, "正在播放" + nickname.encode('utf-8') + "点播的" + keyword
         f.close()
         time.sleep(float(musictime))
         pygame.mixer.music.stop()
@@ -96,6 +95,12 @@ def playMusic(keyword, nickname):
     except:
         pass
 
+#清理下遗留的文件
+try:
+    os.remove("show.txt")
+    os.remove("temp.mp3")
+except:
+    pass
 #标记上一首歌，不重复播放
 lastMusic = ""
 while 1:
