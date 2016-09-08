@@ -46,10 +46,16 @@ class danMu():
     def getNickname(self):
         return self.nickname
 
+    def inBlacklist(self):
+        if self.text.encode("utf-8")[self.text.encode("utf-8").find(
+                songFlag.encode("utf-8")) + songFlageLen:] in blacklist:
+            return -1
+        else:
+            return 0
+
 
 def applyBilibiliDanmu():
     f = requests.post("http://live.bilibili.com/ajax/msg", data=form)
-    print f.text
     danmu_json = json.loads(f.text, encoding="utf-8")
     danmulist = danmu_json["data"]["room"]
     return danmulist
@@ -92,17 +98,25 @@ def playMusic(keyword, nickname):
         time.sleep(float(musictime))
         pygame.mixer.music.stop()
         pygame.quit()
+        os.remove("temp.mp3")
     except:
-        pass
+        blacklist.append(keyword)
+        pygame.quit()
+        os.remove("temp.mp3")
 
+#运行前准备
 #清理下遗留的文件
 try:
     os.remove("show.txt")
     os.remove("temp.mp3")
 except:
     pass
-#标记上一首歌，不重复播放
+#标记上一首歌,不重复播放
 lastMusic = ""
+#初始化黑名单,记录本次启动至今无法下载的歌曲
+#Todo:将内存记录优化到文件记录
+blacklist = []
+
 while 1:
     #初始化歌曲,点歌者列表
     songList, nicknameList = [], []
@@ -116,7 +130,7 @@ while 1:
                   danmu["user_level"], danmu["rnd"])
         #将弹幕列表中所有的点歌歌曲倒序存放到songList中
         if p.isSong() != -1:
-            if p.isSong() != lastMusic:
+            if p.isSong() != lastMusic and p.inBlacklist() != -1:
                 songList.append(p.isSong())
                 nicknameList.append(p.getNickname())
     songList, nicknameList = songList[::-1], nicknameList[::-1]
@@ -137,14 +151,12 @@ while 1:
             if applyQQMusic(keyword) != -1:
                 musicList = applyQQMusic(keyword)
                 downloadLink = musicList[0]["downUrl"]
-                print downloadLink
                 #下载并播放载歌曲
                 try:
                     downloadMusic(downloadLink)
                     playMusic(keyword, nicknameList[i])
                 finally:
-                    lastMusic = keyword
-                break
+                    break
             else:
                 print u"未搜索到" + unicode(keyword, "utf-8")
                 f = open("show.txt", "a")
