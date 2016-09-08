@@ -49,6 +49,7 @@ class danMu():
 
 def applyBilibiliDanmu():
     f = requests.post("http://live.bilibili.com/ajax/msg", data=form)
+    print f.text
     danmu_json = json.loads(f.text, encoding="utf-8")
     danmulist = danmu_json["data"]["room"]
     return danmulist
@@ -79,22 +80,24 @@ def downloadMusic(downloadLink):
 
 
 def playMusic(keyword, nickname):
-    musictime = format(eyed3.load("temp.mp3").info.time_secs)
-    pygame.mixer.init()
-    pygame.mixer.music.load("temp.mp3")
-    pygame.mixer.music.play(loops=0, start=0.0)
-    print u"正在播放" + nickname + u"点播的" + unicode(keyword, "utf-8")
-    f = open("show.txt", "a")
-    print >> f, "正在播放"
-    print >>f, nickname.encode('utf-8') 
-    print >>f, "点播的" + keyword
-    f.close()
-    time.sleep(float(musictime))
-    pygame.mixer.music.stop()
-    pygame.quit()
-    os.remove("temp.mp3")
+    try:
+        musictime = format(eyed3.load("temp.mp3").info.time_secs)
+        pygame.mixer.init()
+        pygame.mixer.music.load("temp.mp3")
+        pygame.mixer.music.play(loops=0, start=0.0)
+        print u"正在播放" + nickname + u"点播的" + unicode(keyword, "utf-8")
+        f = open("show.txt", "a")
+        print >> f, "正在播放" + nickname.encode('utf-8')
+        print >> f, "点播的" + keyword
+        f.close()
+        time.sleep(float(musictime))
+        pygame.mixer.music.stop()
+        pygame.quit()
+    except:
+        pass
 
-
+#标记上一首歌，不重复播放
+lastMusic = ""
 while 1:
     #初始化歌曲,点歌者列表
     songList, nicknameList = [], []
@@ -108,8 +111,9 @@ while 1:
                   danmu["user_level"], danmu["rnd"])
         #将弹幕列表中所有的点歌歌曲倒序存放到songList中
         if p.isSong() != -1:
-            songList.append(p.isSong())
-            nicknameList.append(p.getNickname())
+            if p.isSong() != lastMusic:
+                songList.append(p.isSong())
+                nicknameList.append(p.getNickname())
     songList, nicknameList = songList[::-1], nicknameList[::-1]
     #如果songList为空，则没有点歌信息
     if len(songList) == 0:
@@ -128,9 +132,13 @@ while 1:
             if applyQQMusic(keyword) != -1:
                 musicList = applyQQMusic(keyword)
                 downloadLink = musicList[0]["downUrl"]
+                print downloadLink
                 #下载并播放载歌曲
-                downloadMusic(downloadLink)
-                playMusic(keyword, nicknameList[i])
+                try:
+                    downloadMusic(downloadLink)
+                    playMusic(keyword, nicknameList[i])
+                finally:
+                    lastMusic = keyword
                 break
             else:
                 print u"未搜索到" + unicode(keyword, "utf-8")
