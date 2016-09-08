@@ -2,4 +2,12 @@ Bilibili MusicPlayer
 
 Bilibili点歌机
 
-pythonbianxie
+python编写
+
+依赖包：
+
+pip install requests
+
+pip install pygame
+
+pip install eyed3
